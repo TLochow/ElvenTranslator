@@ -1,0 +1,195 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" style="width:100%;min-height: 100% !important;height:100%">
+<head>
+    <meta charset="utf-8" />
+    <title>Elven Translator</title>
+    <script type="text/javascript">
+        function InputChanged() {
+            var input = document.getElementById("InputText").value;
+            document.getElementById("OutputText").value = TranslateText(input);
+        }
+
+        function TranslateText(text) {
+            var characters = ['q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'y', 'x', 'c', 'v', 'b', 'n', 'm', 'Q', 'W', 'E', 'R', 'T', 'Z', 'U', 'I', 'O', 'P', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Y', 'X', 'C', 'V', 'B', 'N', 'M'];
+
+            var input = text.split('');
+            var isWord = false;
+            var isProtected = false;
+            var currentWord = "";
+            var output = "";
+
+            for (var i = 0; i < input.length; i++) {
+                var current = input[i];
+                if (isProtected) {
+                    if (current == ']') {
+                        isProtected = false;
+                    }
+                    else {
+                        output += current;
+                    }
+                }
+                else if (current == '[') {
+                    isProtected = true;
+                    if (isWord) {
+                        isWord = false;
+                        output += TranslateWord(currentWord);
+                    }
+                }
+                else if (characters.includes(current)) {
+                    if (!isWord) {
+                        isWord = true;
+                        currentWord = "";
+                    }
+                    currentWord += current;
+                }
+                else {
+                    if (isWord) {
+                        isWord = false;
+                        output += TranslateWord(currentWord);
+                    }
+                    output += current;
+                }
+            }
+            if (isWord) {
+                output += TranslateWord(currentWord);
+            }
+
+            return output.replaceAll('_', 'n');
+        }
+
+        function TranslateWord(word) {
+            var isCapetalized = word[0] == word[0].toUpperCase();
+            word = word.toLowerCase();
+            word = word.replaceAll('c', 's').replaceAll('z', 's').replaceAll('y', 'i');
+            var characters = word.split('');
+            var first = characters[0];
+            characters.splice(0, 1);
+            characters.push(first);
+
+            var vowels = ['a', 'e', 'i', 'o', 'u', 'w'];
+            for (var i = 0; i < characters.length - 1; i++) {
+                var current = characters[i];
+                var next = characters[i + 1];
+                if (current == next) {
+                    characters.splice(i, 1);
+                    i--;
+                }
+                else if (vowels.includes(current) && vowels.includes(next)) {
+                    characters.splice(i + 1, 0, '\'');
+                }
+            }
+
+            for (var i = 0; i < characters.length; i++) {
+                if (characters[i] == 'w') {
+                    characters[i] = 'u';
+                    characters.splice(i + 1, 0, 'e');
+                }
+            }
+
+            var firstVowel = ' ';
+            for (var i = 0; i < characters.length; i++) {
+                var current = characters[i];
+                if (vowels.includes(current)) {
+                    firstVowel = current;
+                    break;
+                }
+            }
+
+            var wordLength = characters.length;
+            var last = characters[wordLength - 1];
+            var secondToLast = ' ';
+            if (wordLength > 1)
+                secondToLast = characters[wordLength - 2];
+
+            switch (firstVowel) {
+                case 'a':
+                    if (last != 'e')
+                        characters.push('e');
+                    else if (secondToLast == '\'')
+                        characters.splice(wordLength - 2, 1);
+                    break;
+                case 'e':
+                    if (last != 'a')
+                        characters.push('a');
+                    else if (secondToLast == '\'')
+                        characters.splice(wordLength - 2, 1);
+                    characters.push('i');
+                    break;
+                case 'i':
+                    if (last != 'o')
+                        characters.push('o');
+                    else if (secondToLast == '\'')
+                        characters.splice(wordLength - 2, 1);
+                    break;
+                case 'o':
+                    if (last != 'u')
+                        characters.push('u');
+                    else if (secondToLast == '\'')
+                        characters.splice(wordLength - 2, 1);
+                    break;
+                case 'u':
+                    if (last != 'a')
+                        characters.push('a');
+                    else if (secondToLast == '\'')
+                        characters.splice(wordLength - 2, 1);
+                    break;
+                default:
+                    if (last != 'i')
+                        characters.push('i');
+                    else if (secondToLast == '\'')
+                        characters.splice(wordLength - 2, 1);
+                    break;
+            }
+
+            if (isCapetalized)
+                characters[0] = characters[0].toUpperCase();
+
+            return characters.join("");
+        }
+    </script>
+</head>
+<body>
+    <center>
+        <h1>Elven Translator</h1>
+    </center>
+    <div>
+        <div>
+            For plural, enter word in singular form followed by an _ - the _ will be replaced with an n.
+        </div>
+        <div>
+            Text in [ ] will not be changed. This can be used for names or words in other languages.
+        </div>
+        <table style="width:100%;min-height: 100% !important;height:100%;margin-top:10px">
+            <tr>
+                <td>
+                    <div>Original English:</div>
+                    <textarea id="InputText" style="width:100%;min-height: 100% !important;height:100%" rows="30" oninput="InputChanged()">
+This text will be translated.
+
+Plural:
+One word, many word_
+One fly, many fly_
+
+Exclusion:
+[This will not be translated.]
+So a name, like [Viktor], can remain in the original form.</textarea>
+                </td>
+                <td>
+                    <div>Translation:</div>
+                    <textarea id="OutputText" style="width:100%;min-height: 100% !important;height:100%" rows="30" readonly="readonly">
+Histo extai ilueo ebai ranslatedte.
+
+Luralpa:
+Ne'oai ordueu, anime ordueun
+Ne'oai lifo, anime lifon
+
+Xslusi'onea:
+This will not be translated.
+Osu ae amene, ikelo Viktor, anse ema'inrai nio hetai riginalo ormfu.</textarea>
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>
